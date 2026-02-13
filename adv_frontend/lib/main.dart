@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'pages/backstory_page.dart';
 import 'pages/choice_page.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart'; // Generated during setup
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,18 +15,154 @@ class Routes {
   static const String choice = '/choice';
 }
 
+
+class FirebaseConfig {
+  static FirebaseOptions get currentPlatform {
+    if (kIsWeb) {
+      return web;
+    }
+
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return android;
+      case TargetPlatform.iOS:
+        return ios;
+      case TargetPlatform.macOS:
+        return macos;
+      case TargetPlatform.windows:
+        return windows;
+      case TargetPlatform.linux:
+        return linux;
+      default:
+        throw UnsupportedError('Unsupported Firebase platform.');
+    }
+  }
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: String.fromEnvironment('FIREBASE_API_KEY', defaultValue: ''),
+    appId: String.fromEnvironment('FIREBASE_APP_ID', defaultValue: ''),
+    messagingSenderId: String.fromEnvironment(
+      'FIREBASE_MESSAGING_SENDER_ID',
+      defaultValue: '',
+    ),
+    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID', defaultValue: ''),
+    authDomain: String.fromEnvironment('FIREBASE_AUTH_DOMAIN', defaultValue: ''),
+    storageBucket: String.fromEnvironment(
+      'FIREBASE_STORAGE_BUCKET',
+      defaultValue: '',
+    ),
+    measurementId: String.fromEnvironment(
+      'FIREBASE_MEASUREMENT_ID',
+      defaultValue: '',
+    ),
+  );
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: String.fromEnvironment('FIREBASE_API_KEY', defaultValue: ''),
+    appId: String.fromEnvironment('FIREBASE_ANDROID_APP_ID', defaultValue: ''),
+    messagingSenderId: String.fromEnvironment(
+      'FIREBASE_MESSAGING_SENDER_ID',
+      defaultValue: '',
+    ),
+    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID', defaultValue: ''),
+    storageBucket: String.fromEnvironment(
+      'FIREBASE_STORAGE_BUCKET',
+      defaultValue: '',
+    ),
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: String.fromEnvironment('FIREBASE_API_KEY', defaultValue: ''),
+    appId: String.fromEnvironment('FIREBASE_IOS_APP_ID', defaultValue: ''),
+    messagingSenderId: String.fromEnvironment(
+      'FIREBASE_MESSAGING_SENDER_ID',
+      defaultValue: '',
+    ),
+    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID', defaultValue: ''),
+    storageBucket: String.fromEnvironment(
+      'FIREBASE_STORAGE_BUCKET',
+      defaultValue: '',
+    ),
+    iosBundleId: String.fromEnvironment(
+      'FIREBASE_IOS_BUNDLE_ID',
+      defaultValue: '',
+    ),
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: String.fromEnvironment('FIREBASE_API_KEY', defaultValue: ''),
+    appId: String.fromEnvironment('FIREBASE_MACOS_APP_ID', defaultValue: ''),
+    messagingSenderId: String.fromEnvironment(
+      'FIREBASE_MESSAGING_SENDER_ID',
+      defaultValue: '',
+    ),
+    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID', defaultValue: ''),
+    storageBucket: String.fromEnvironment(
+      'FIREBASE_STORAGE_BUCKET',
+      defaultValue: '',
+    ),
+    iosBundleId: String.fromEnvironment(
+      'FIREBASE_MACOS_BUNDLE_ID',
+      defaultValue: '',
+    ),
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: String.fromEnvironment('FIREBASE_API_KEY', defaultValue: ''),
+    appId: String.fromEnvironment('FIREBASE_WINDOWS_APP_ID', defaultValue: ''),
+    messagingSenderId: String.fromEnvironment(
+      'FIREBASE_MESSAGING_SENDER_ID',
+      defaultValue: '',
+    ),
+    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID', defaultValue: ''),
+    storageBucket: String.fromEnvironment(
+      'FIREBASE_STORAGE_BUCKET',
+      defaultValue: '',
+    ),
+  );
+
+  static const FirebaseOptions linux = FirebaseOptions(
+    apiKey: String.fromEnvironment('FIREBASE_API_KEY', defaultValue: ''),
+    appId: String.fromEnvironment('FIREBASE_LINUX_APP_ID', defaultValue: ''),
+    messagingSenderId: String.fromEnvironment(
+      'FIREBASE_MESSAGING_SENDER_ID',
+      defaultValue: '',
+    ),
+    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID', defaultValue: ''),
+    storageBucket: String.fromEnvironment(
+      'FIREBASE_STORAGE_BUCKET',
+      defaultValue: '',
+    ),
+  );
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await _initializeFirebase();
+  runApp(const MyApp());
+}
+
+Future<void> _initializeFirebase() async {
+  if (FirebaseConfig.currentPlatform.apiKey.isEmpty ||
+      FirebaseConfig.currentPlatform.appId.isEmpty ||
+      FirebaseConfig.currentPlatform.projectId.isEmpty) {
+    debugPrint('Firebase config is missing. Running without Firebase connection.');
+    return;
+  }
+
   await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+    options: FirebaseConfig.currentPlatform,
   );
 
   await FirebaseAuth.instance.signInAnonymously();
-  String userId = FirebaseAuth.instance.currentUser!.uid;
+  final userId = FirebaseAuth.instance.currentUser?.uid;
+  if (userId == null || userId.isEmpty) {
+    return;
+  }
 
-  FirebaseFirestore firestore = FirebaseFirestore.instance;
-  DocumentReference userDoc = firestore.collection('user').doc(userId);
-  DocumentSnapshot docSnapshot = await userDoc.get();
+  final firestore = FirebaseFirestore.instance;
+  final userDoc = firestore.collection('user').doc(userId);
+  final docSnapshot = await userDoc.get();
 
   if (!docSnapshot.exists) {
     await userDoc.set({
@@ -34,8 +170,6 @@ void main() async {
       'latest_at': FieldValue.serverTimestamp(),
     });
   }
-
-  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -45,6 +179,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Unfoldy',
+      builder: (context, child) => AppViewport(child: child ?? const SizedBox.shrink()),
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF7069A1)),
         useMaterial3: true,
@@ -63,6 +198,37 @@ class MyApp extends StatelessWidget {
               imageFiles: [],
             ),
       },
+    );
+  }
+}
+
+
+class AppViewport extends StatelessWidget {
+  const AppViewport({super.key, required this.child});
+
+  final Widget child;
+
+  static const double mobileWidth = 390;
+  static const double mobileHeight = 844;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!kIsWeb) {
+      return child;
+    }
+
+    return ColoredBox(
+      color: const Color(0xFF111111),
+      child: Center(
+        child: SizedBox(
+          width: mobileWidth,
+          height: mobileHeight,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: child,
+          ),
+        ),
+      ),
     );
   }
 }

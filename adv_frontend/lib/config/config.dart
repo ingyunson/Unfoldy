@@ -1,13 +1,11 @@
 class Config {
-  static const String baseUrl = 'PUBLIC_IP_ADDRESS';
-  static const String apiUrl = 'http://$baseUrl';
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://127.0.0.1:8000',
+  );
 
-  // Platform-specific configurations
-  static String getPlatformUrl() {
-    return apiUrl;
-  }
+  static String getPlatformUrl() => baseUrl;
 
-  // Add any additional configuration values here
   static const String apiVersion = 'v1';
   static const Duration timeout = Duration(seconds: 30);
 }

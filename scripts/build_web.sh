@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+
 FLUTTER_VERSION="${FLUTTER_VERSION:-3.24.5}"
 FLUTTER_DIR="${HOME}/flutter"
 

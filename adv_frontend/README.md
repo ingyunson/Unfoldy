@@ -69,14 +69,18 @@ This repository includes Vercel config for Flutter web deployment.
 3. Add environment variables in Vercel Project Settings:
    - `API_BASE_URL`
    - Firebase variables (`FIREBASE_API_KEY`, `FIREBASE_APP_ID`, etc.) if needed.
+
    - Optional: `FLUTTER_VERSION` (default: `3.24.5`)
+
 4. Deploy.
 
 Vercel uses:
 
 - `vercel.json` for output + SPA rewrite
 - `scripts/build_web.sh` for Flutter web build
+
 - The build script auto-installs Flutter when Vercel image does not include it
+
 
 A few resources to get you started if this is your first Flutter project:
 

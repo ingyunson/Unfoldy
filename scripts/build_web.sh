@@ -1,6 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+
+FLUTTER_VERSION="${FLUTTER_VERSION:-3.24.5}"
+FLUTTER_DIR="${HOME}/flutter"
+
+if ! command -v flutter >/dev/null 2>&1; then
+  echo "[build_web] Flutter not found. Installing Flutter ${FLUTTER_VERSION}..."
+  rm -rf "${FLUTTER_DIR}"
+  git clone --depth 1 --branch "${FLUTTER_VERSION}" https://github.com/flutter/flutter.git "${FLUTTER_DIR}"
+  export PATH="${FLUTTER_DIR}/bin:${PATH}"
+else
+  echo "[build_web] Using preinstalled Flutter: $(flutter --version | head -n 1)"
+fi
+
+flutter config --enable-web >/dev/null
+flutter --version
+
 cd adv_frontend
 flutter pub get
 flutter build web --release \
